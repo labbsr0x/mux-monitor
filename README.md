@@ -2,7 +2,7 @@
 
 A Prometheus middleware to add basic but very useful metrics for your gorilla/mux app.
 
-# Metrics
+## Metrics
 
 The only exposed metrics (for now) are the following:
 

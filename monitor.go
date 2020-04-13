@@ -22,6 +22,7 @@ var (
 	defaultBuckets = []float64{0.1, 0.3, 1.5, 10.5}
 )
 
+//New create new Monitor instance
 func New(applicationVersion string) (*Monitor, error) {
 	if strings.TrimSpace(applicationVersion) == "" {
 		return nil, errors.New("application version must be a non-empty string")
@@ -29,9 +30,9 @@ func New(applicationVersion string) (*Monitor, error) {
 
 	monitor := &Monitor{}
 
-	monitor.reqDuration    = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	monitor.reqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "request_seconds",
-		Help:    "Duration in seconds of HTTP requests.",
+		Help:    "duration in seconds of HTTP requests.",
 		Buckets: defaultBuckets,
 	}, []string{"type", "status", "method", "addr", "isError"})
 
@@ -48,7 +49,8 @@ func New(applicationVersion string) (*Monitor, error) {
 	monitor.applicationInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "application_info",
 		Help: "static information about the application",
-	}, []string{"name"})
+	}, []string{"version"})
+	monitor.applicationInfo.WithLabelValues(applicationVersion).Set(1)
 
 	return monitor, nil
 }
