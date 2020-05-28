@@ -19,6 +19,17 @@ type Monitor struct {
 	errorMessageKey string
 }
 
+type DependencyStatus int
+type DependencyChecker interface {
+	GetDependencyName() string
+	Check() DependencyStatus
+}
+
+const (
+	DOWN DependencyStatus = iota
+	UP
+)
+
 const DefaultErrorMessageKey = "error-message"
 
 var (
@@ -93,4 +104,17 @@ func (m *Monitor) Prometheus(next http.Handler) http.Handler {
 		m.collectTime(r.Proto, statusCodeStr, r.Method, path, isErrorStr, errorMessage, duration.Seconds())
 		m.collectSize(r.Proto, statusCodeStr, r.Method, path, isErrorStr, errorMessage, float64(respWriter.Count()))
 	})
+}
+
+func (m *Monitor) AddDependencyChecker(checker DependencyChecker, checkingPeriod time.Duration) {
+	ticker := time.NewTicker(checkingPeriod)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				status := checker.Check()
+				m.dependencyUP.WithLabelValues(checker.GetDependencyName()).Set(float64(status))
+			}
+		}
+	}()
 }
