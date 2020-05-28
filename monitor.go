@@ -16,30 +16,41 @@ type Monitor struct {
 	respSize        *prometheus.CounterVec
 	dependencyUP    *prometheus.GaugeVec
 	applicationInfo *prometheus.GaugeVec
+	errorMessageKey string
 }
 
+const DefaultErrorMessageKey = "error-message"
+
 var (
-	defaultBuckets = []float64{0.1, 0.3, 1.5, 10.5}
+	DefaultBuckets = []float64{0.1, 0.3, 1.5, 10.5}
 )
 
 //New create new Monitor instance
-func New(applicationVersion string) (*Monitor, error) {
+func New(applicationVersion string, errorMessageKey string, buckets []float64) (*Monitor, error) {
 	if strings.TrimSpace(applicationVersion) == "" {
 		return nil, errors.New("application version must be a non-empty string")
 	}
 
-	monitor := &Monitor{}
+	if strings.TrimSpace(applicationVersion) == "" {
+		errorMessageKey = DefaultErrorMessageKey
+	}
+
+	if buckets == nil {
+		buckets = DefaultBuckets
+	}
+
+	monitor := &Monitor{errorMessageKey: errorMessageKey}
 
 	monitor.reqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "request_seconds",
 		Help:    "duration in seconds of HTTP requests.",
-		Buckets: defaultBuckets,
-	}, []string{"type", "status", "method", "addr", "isError"})
+		Buckets: buckets,
+	}, []string{"type", "status", "method", "addr", "isError", "errorMessage"})
 
 	monitor.respSize = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "response_size_bytes",
 		Help: "counts the size of each HTTP response",
-	}, []string{"type", "status", "method", "addr", "isError"})
+	}, []string{"type", "status", "method", "addr", "isError", "errorMessage"})
 
 	monitor.dependencyUP = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "dependency_up",
@@ -55,12 +66,12 @@ func New(applicationVersion string) (*Monitor, error) {
 	return monitor, nil
 }
 
-func (m *Monitor) collectTime(reqType, status, method, addr string, isError string, durationSeconds float64) {
-	m.reqDuration.WithLabelValues(reqType, status, method, addr, isError).Observe(durationSeconds)
+func (m *Monitor) collectTime(reqType, status, method, addr string, isError string, errorMessage string, durationSeconds float64) {
+	m.reqDuration.WithLabelValues(reqType, status, method, addr, isError, errorMessage).Observe(durationSeconds)
 }
 
-func (m *Monitor) collectSize(reqType, status, method, addr string, isError string, size float64) {
-	m.respSize.WithLabelValues(reqType, status, method, addr, isError).Add(size)
+func (m *Monitor) collectSize(reqType, status, method, addr string, isError string, errorMessage string, size float64) {
+	m.respSize.WithLabelValues(reqType, status, method, addr, isError, errorMessage).Add(size)
 }
 
 // Prometheus implements mux.MiddlewareFunc.
@@ -77,8 +88,9 @@ func (m *Monitor) Prometheus(next http.Handler) http.Handler {
 
 		statusCodeStr := respWriter.StatusCodeStr()
 		isErrorStr := respWriter.IsErrorStr()
+		errorMessage := w.Header().Get(m.errorMessageKey)
 
-		m.collectTime(r.Proto, statusCodeStr, r.Method, path, isErrorStr, duration.Seconds())
-		m.collectSize(r.Proto, statusCodeStr, r.Method, path, isErrorStr, float64(respWriter.Count()))
+		m.collectTime(r.Proto, statusCodeStr, r.Method, path, isErrorStr, errorMessage, duration.Seconds())
+		m.collectSize(r.Proto, statusCodeStr, r.Method, path, isErrorStr, errorMessage, float64(respWriter.Count()))
 	})
 }
