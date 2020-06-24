@@ -4,7 +4,7 @@ A Prometheus middleware to add basic but very useful metrics for your gorilla/mu
 
 ## Metrics
 
-The only exposed metrics (for now) are the following:
+The exposed metrics are the following:
 
 ```
 request_seconds_bucket{type,status, method, addr, isError, le}
@@ -30,3 +30,11 @@ In detail:
 5. `dependency_up` is a metric to register weather a specific dependency is up (1) or down (0). The label `name` registers the dependency name;
 
 6. Finally, `application_info` holds static info of an application, such as it's semantic version number;
+
+## Install
+
+With a [correctly configured](https://golang.org/doc/install#testing) Go toolchain:
+
+```sh
+go get -u github.com/labbsr0x/mux-monitor
+```
