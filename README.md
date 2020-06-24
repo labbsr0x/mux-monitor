@@ -76,3 +76,12 @@ r.Use(monitor.Prometheus)
 
 > :warning: **NOTE**: 
 > This middleware must be the first in the middleware chain file so that you can get the most accurate measurement of latency and response size.
+
+### Expose Metrics Endpoint
+
+You must register a specific router to expose the application metrics:
+
+```go
+// Register metrics endpoint
+r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
+```
