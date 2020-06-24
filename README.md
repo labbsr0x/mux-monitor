@@ -47,10 +47,32 @@ Labels:
 
 7. `errorMessage` registers the error message;
 
-## Install
+## How to
+
+### Install
 
 With a [correctly configured](https://golang.org/doc/install#testing) Go toolchain:
 
 ```sh
 go get -u github.com/labbsr0x/mux-monitor
 ```
+
+### Register Metrics Middleware 
+You must register the metrics middleware to enable metric collection. 
+
+Metrics Middleware can be added to a router using `Router.Use()`:
+
+```go
+// Creates mux-monitor instance
+monitor, err := muxMonitor.New("v1.0.0", muxMonitor.DefaultErrorMessageKey, muxMonitor.DefaultBuckets)
+if err != nil {
+    panic(err)
+}
+
+r := mux.NewRouter()
+// Register mux-monitor middleware
+r.Use(monitor.Prometheus)
+```
+
+> :warning: **NOTE**: 
+> This middleware must be the first in the middleware chain file so that you can get the most accurate measurement of latency and response size.
