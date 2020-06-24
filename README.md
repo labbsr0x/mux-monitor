@@ -31,6 +31,22 @@ In detail:
 
 6. Finally, `application_info` holds static info of an application, such as it's semantic version number;
 
+Labels:
+
+1. `type` tells which request protocol was used (e.g. `grpc` or `http`);
+
+2. `status` registers the response status (e.g. HTTP status code);
+
+3. `method` registers the request method;
+
+4. `addr` registers the requested endpoint address;
+
+5. `version` tells which version of your app handled the request;
+
+6. `isError` tells status code reported is an error or not;
+
+7. `errorMessage` registers the error message;
+
 ## Install
 
 With a [correctly configured](https://golang.org/doc/install#testing) Go toolchain:
