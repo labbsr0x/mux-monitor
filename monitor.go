@@ -102,7 +102,9 @@ func (m *Monitor) Prometheus(next http.Handler) http.Handler {
 
 		statusCodeStr := respWriter.StatusCodeStr()
 		isErrorStr := respWriter.IsErrorStr()
-		errorMessage := w.Header().Get(m.errorMessageKey)
+
+		errorMessage := r.Header.Get(m.errorMessageKey)
+		r.Header.Del(m.errorMessageKey)
 
 		m.collectTime(r.Proto, statusCodeStr, r.Method, path, isErrorStr, errorMessage, duration.Seconds())
 		m.collectSize(r.Proto, statusCodeStr, r.Method, path, isErrorStr, errorMessage, float64(respWriter.Count()))

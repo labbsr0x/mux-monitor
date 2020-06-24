@@ -86,6 +86,28 @@ You must register a specific router to expose the application metrics:
 r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 ```
 
+### Register Error Message
+
+It's possible to register the error message to your metrics, you must set a header to your `http.Request` with key defined on `muxMonitor.New`.
+
+The following code creates a monitor instance with the error message key `muxMonitor.DefaultErrorMessageKey` passed by the second parameter:
+
+```go
+// Creates mux-monitor instance
+monitor, err := muxMonitor.New("v1.0.0", muxMonitor.DefaultErrorMessageKey, muxMonitor.DefaultBuckets)
+```
+
+At your handler, your must set a header with the same key `muxMonitor.DefaultErrorMessageKey`:
+```go
+func ErrorHandler(w http.ResponseWriter, r *http.Request) {
+	r.Header.Set(muxMonitor.DefaultErrorMessageKey, "this is an error message - internal server error")
+	w.WriteHeader(http.StatusInternalServerError)
+}
+``` 
+
+> :warning: **NOTE**: 
+> The cardinality of this label affect Prometheus performance 
+
 ### Register Dependency State Checkers
 
 To add a dependency state metrics to the Monitor, you must create a checker implementing the interface `DependencyChecker` and add an instance to the Monitor with the period interval that the dependency must be checked.
