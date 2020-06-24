@@ -85,3 +85,35 @@ You must register a specific router to expose the application metrics:
 // Register metrics endpoint
 r.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 ```
+
+### Register Dependency State Checkers
+
+To add a dependency state metrics to the Monitor, you must create a checker implementing the interface `DependencyChecker` and add an instance to the Monitor with the period interval that the dependency must be checked.
+
+Implementing the `DependencyChecker` interface:
+```go
+type FakeDependencyChecker struct {}
+
+func (m *FakeDependencyChecker) GetDependencyName() string {
+	return "fake-dependency"
+}
+
+func (m *FakeDependencyChecker) Check() muxMonitor.DependencyStatus {
+    // Do your things and return muxMonitor.UP or muxMonitor.DOWN
+	return muxMonitor.DOWN
+}
+```
+
+Adding the dependency checker to the monitor:
+```go
+func main() {
+	// Creates mux-monitor instance
+	monitor, err := muxMonitor.New("v1.0.0", muxMonitor.DefaultErrorMessageKey, muxMonitor.DefaultBuckets)
+	if err != nil {
+		panic(err)
+	}
+
+	dependencyChecker := &FakeDependencyChecker{}
+	monitor.AddDependencyChecker(dependencyChecker, time.Second * 30)
+}
+```
