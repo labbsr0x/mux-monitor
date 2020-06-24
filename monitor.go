@@ -19,7 +19,10 @@ type Monitor struct {
 	errorMessageKey string
 }
 
+// DependencyStatus is the type to represent UP or DOWN states
 type DependencyStatus int
+
+// DependencyChecker specifies the methods a checker must implement.
 type DependencyChecker interface {
 	GetDependencyName() string
 	Check() DependencyStatus
@@ -106,6 +109,7 @@ func (m *Monitor) Prometheus(next http.Handler) http.Handler {
 	})
 }
 
+// AddDependencyChecker creates a ticker that periodically executes the checker and collects the dependency state metrics
 func (m *Monitor) AddDependencyChecker(checker DependencyChecker, checkingPeriod time.Duration) {
 	ticker := time.NewTicker(checkingPeriod)
 	go func() {
