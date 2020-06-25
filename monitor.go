@@ -3,6 +3,7 @@ package mux_monitor
 import (
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,6 +19,7 @@ type Monitor struct {
 	dependencyUP          *prometheus.GaugeVec
 	applicationInfo       *prometheus.GaugeVec
 	errorMessageKey       string
+	IsStatusError         func(statusCode int) bool
 }
 
 // DependencyStatus is the type to represent UP or DOWN states
@@ -54,33 +56,33 @@ func New(applicationVersion string, errorMessageKey string, buckets []float64) (
 		buckets = DefaultBuckets
 	}
 
-	monitor := &Monitor{errorMessageKey: errorMessageKey}
+	monitor := &Monitor{errorMessageKey: errorMessageKey, IsStatusError: IsStatusError}
 
 	monitor.reqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "request_seconds",
-		Help:    "duration in seconds of HTTP requests.",
+		Help:    "Duration in seconds of HTTP requests.",
 		Buckets: buckets,
 	}, []string{"type", "status", "method", "addr", "isError", "errorMessage"})
 
 	monitor.respSize = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "response_size_bytes",
-		Help: "counts the size of each HTTP response",
+		Help: "Counts the size of each HTTP response",
 	}, []string{"type", "status", "method", "addr", "isError", "errorMessage"})
 
 	monitor.dependencyUP = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "dependency_up",
-		Help: "records if a dependency is up or down. 1 for up, 0 for down",
+		Help: "Records if a dependency is up or down. 1 for up, 0 for down",
 	}, []string{"name"})
 
 	monitor.dependencyReqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "dependency_request_seconds",
-		Help:    "duration of dependency requests in seconds.",
+		Help:    "Duration of dependency requests in seconds.",
 		Buckets: buckets,
 	}, []string{"name", "type", "status", "method", "addr", "isError", "errorMessage"})
 
 	monitor.applicationInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "application_info",
-		Help: "static information about the application",
+		Help: "Static information about the application",
 	}, []string{"version"})
 	monitor.applicationInfo.WithLabelValues(applicationVersion).Set(1)
 
@@ -113,7 +115,7 @@ func (m *Monitor) Prometheus(next http.Handler) http.Handler {
 		duration := time.Since(respWriter.started)
 
 		statusCodeStr := respWriter.StatusCodeStr()
-		isErrorStr := respWriter.IsErrorStr()
+		isErrorStr := strconv.FormatBool(m.IsStatusError(respWriter.statusCode))
 
 		errorMessage := r.Header.Get(m.errorMessageKey)
 		r.Header.Del(m.errorMessageKey)
@@ -135,4 +137,8 @@ func (m *Monitor) AddDependencyChecker(checker DependencyChecker, checkingPeriod
 			}
 		}
 	}()
+}
+
+func IsStatusError(statusCode int) bool {
+	return statusCode < 200 || statusCode >= 400
 }
