@@ -22,25 +22,25 @@ Details:
 
 1. The `request_seconds_bucket` metric defines the histogram of how many requests are falling into the well-defined buckets represented by the label `le`;
 
-2. The `request_seconds_count` is a counter that counts the overall number of requests with those exact label occurrences;
+2. The `request_seconds_count` metric counts the overall number of requests with those exact label occurrences;
 
-3. The `request_seconds_sum` is a counter that counts the overall sum of how long the requests with those exact label occurrences are taking;
+3. The `request_seconds_sum` metric counts the overall sum of how long the requests with those exact label occurrences are taking;
 
-4. The `response_size_bytes` is a counter that computes how much data is being sent back to the user for a given request type. It captures the response size from the `content-length` response header. If there is no such header, the value exposed as metric will be zero;
+4. The `response_size_bytes` metric computes how much data is being sent back to the user for a given request type;
 
-5. The `dependency_up` is a metric to register whether a specific dependency is up (1) or down (0). The label `name` registers the dependency name;
+5. The `dependency_up` metric register whether a specific dependency is up (1) or down (0). The label `name` registers the dependency name;
 
-6. The `dependency_request_seconds_bucket` is a metric that defines the histogram of how many requests to a specific dependency are falling into the well defined buckets represented by the label le;
+6. The `dependency_request_seconds_bucket` metric defines the histogram of how many requests to a specific dependency are falling into the well-defined buckets represented by the label le;
 
-7. The `dependency_request_seconds_count` is a counter that counts the overall number of requests to a specific dependency;
+7. The `dependency_request_seconds_count` metric counts the overall number of requests to a specific dependency;
 
-8. The `dependency_request_seconds_sum` is a counter that counts the overall sum of how long requests to a specific dependency are taking;
+8. The `dependency_request_seconds_sum` metric counts the overall sum of how long requests to a specific dependency are taking;
 
-9. The `application_info` holds static info of an application, such as it's semantic version number;
+9. The `application_info` holds static info of an application, such as its semantic version number;
 
 Labels:
 
-1. `type` tells which request protocol was used (e.g. `grpc` or `http`);
+1. `type` registers request protocol used (e.g. `grpc` or `http`);
 
 2. `status` registers the response status (e.g. HTTP status code);
 
@@ -48,9 +48,9 @@ Labels:
 
 4. `addr` registers the requested endpoint address;
 
-5. `version` tells which version of your app handled the request;
+5. `version` registers which version of your app handled the request;
 
-6. `isError` status code reported is an error or not;
+6. `isError` registers whether status code reported is an error or not;
 
 7. `errorMessage` registers the error message;
 
