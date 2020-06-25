@@ -12,11 +12,12 @@ import (
 )
 
 type Monitor struct {
-	reqDuration     *prometheus.HistogramVec
-	respSize        *prometheus.CounterVec
-	dependencyUP    *prometheus.GaugeVec
-	applicationInfo *prometheus.GaugeVec
-	errorMessageKey string
+	reqDuration           *prometheus.HistogramVec
+	dependencyReqDuration *prometheus.HistogramVec
+	respSize              *prometheus.CounterVec
+	dependencyUP          *prometheus.GaugeVec
+	applicationInfo       *prometheus.GaugeVec
+	errorMessageKey       string
 }
 
 // DependencyStatus is the type to represent UP or DOWN states
@@ -71,6 +72,12 @@ func New(applicationVersion string, errorMessageKey string, buckets []float64) (
 		Help: "records if a dependency is up or down. 1 for up, 0 for down",
 	}, []string{"name"})
 
+	monitor.dependencyReqDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "dependency_request_seconds",
+		Help:    "duration of dependency requests in seconds.",
+		Buckets: buckets,
+	}, []string{"name", "type", "status", "method", "addr", "isError", "errorMessage"})
+
 	monitor.applicationInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "application_info",
 		Help: "static information about the application",
@@ -80,12 +87,17 @@ func New(applicationVersion string, errorMessageKey string, buckets []float64) (
 	return monitor, nil
 }
 
-func (m *Monitor) collectTime(reqType, status, method, addr string, isError string, errorMessage string, durationSeconds float64) {
+func (m *Monitor) collectTime(reqType, status, method, addr, isError, errorMessage string, durationSeconds float64) {
 	m.reqDuration.WithLabelValues(reqType, status, method, addr, isError, errorMessage).Observe(durationSeconds)
 }
 
-func (m *Monitor) collectSize(reqType, status, method, addr string, isError string, errorMessage string, size float64) {
+func (m *Monitor) collectSize(reqType, status, method, addr, isError, errorMessage string, size float64) {
 	m.respSize.WithLabelValues(reqType, status, method, addr, isError, errorMessage).Add(size)
+}
+
+// CollectDependencyTime collet the duration of dependency requests in seconds
+func (m *Monitor) CollectDependencyTime(name, reqType, status, method, addr, isError, errorMessage string, durationSeconds float64) {
+	m.dependencyReqDuration.WithLabelValues(name, reqType, status, method, addr, isError, errorMessage).Observe(durationSeconds)
 }
 
 // Prometheus implements mux.MiddlewareFunc.
