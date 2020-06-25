@@ -33,14 +33,6 @@ func (r *ResponseWriter) StatusCodeStr() string {
 	return strconv.Itoa(r.statusCode)
 }
 
-func (r *ResponseWriter) IsError() bool {
-	return r.statusCode < 200 || r.statusCode >= 400
-}
-
-func (r *ResponseWriter) IsErrorStr() string {
-	return strconv.FormatBool(r.IsError())
-}
-
 // Write returns underlying Write result, while counting data size
 func (r *ResponseWriter) Write(b []byte) (int, error) {
 	n, err := r.ResponseWriter.Write(b)
